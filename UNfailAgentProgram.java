@@ -29,7 +29,6 @@ public class UNfailAgentProgram implements AgentProgram {
 	protected int size;
 	protected int color;
 	protected int[][] board;
-	protected boolean myTurn;
 	protected LinkedList<Long> blackPieces;
 	protected LinkedList<Long> whitePieces;
 	protected HashMap<Long, Integer> myAvailableMoves;
@@ -40,7 +39,6 @@ public class UNfailAgentProgram implements AgentProgram {
 		this.color = color.equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
 		this.size = 0;
 		this.board = null;
-		this.myTurn = this.color == this.WHITE;
 		this.whitePieces = new LinkedList<>();
 		this.blackPieces = new LinkedList<>();
 		this.myAvailableMoves = new HashMap<>();
@@ -240,7 +238,8 @@ public class UNfailAgentProgram implements AgentProgram {
 				pos = entry.getKey();
 			}
 		}
-		return Space.decode(pos);
+		
+		return (pos == null) ? null : Space.decode(pos);
 	}
 
 	@Override
@@ -251,7 +250,7 @@ public class UNfailAgentProgram implements AgentProgram {
 		System.out.println(this.id+": current turn: " + ((turn == this.WHITE) ? "white" : "black"));
 				
 		
-		if (turn == this.color /*&& this.myTurn*/) {
+		if (turn == this.color) {
 			
 			System.out.println(this.id+": My turn");
 			if (this.size == 0) {
@@ -260,23 +259,17 @@ public class UNfailAgentProgram implements AgentProgram {
 			}
 			this.updateBoard(p);
 			this.printBoard();
-			
 			this.calculateAvailableMoves();
-			
-			move = this.getOptimalMove(this.color);
-			
-			this.myTurn = false;			
-			System.out.println(this.id+": "+move[0] + ":" + move[1] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
-			return new Action(move[1] + ":" + move[0] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
-			
-			
-//		} else if (turn == this.color) {
-//			System.out.println(this.id+": Ya hice mi movimiento, esperando...");
-//			return new Action(Reversi.PASS);
-			
+			move = this.getOptimalMove(this.color);	
+			if (move == null) {
+				System.out.println("No tengo movimientos... Pasar");
+				return new Action(Reversi.PASS);
+			} else {
+				System.out.println(this.id+": "+move[0] + ":" + move[1] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
+				return new Action(move[1] + ":" + move[0] + ":" + ((this.color == this.WHITE) ? "white" : "black"));	
+			}
 		} else {
 			System.out.println(this.id+": Enemy turn");
-			this.myTurn = true;
 			System.out.println(this.id+": Stealing turn");
 			return new Action(Reversi.PASS);
 		}
@@ -286,7 +279,6 @@ public class UNfailAgentProgram implements AgentProgram {
 	public void init() {
 		this.size = 0;
 		this.board = null;
-//		this.availableMoves = new LinkedList<>();
 		this.whitePieces = new LinkedList<>();
 		this.blackPieces = new LinkedList<>();
 		this.myAvailableMoves = new HashMap<>();
