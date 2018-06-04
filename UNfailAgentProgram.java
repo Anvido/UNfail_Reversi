@@ -5,6 +5,7 @@
 package unalcol.agents.examples.games.reversi.sis20181.UNfail;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -229,16 +230,22 @@ public class UNfailAgentProgram implements AgentProgram {
 	
 	public int[] getOptimalMove(int color) {
 		int max = 0;
-		Long pos = null;
 		HashMap<Long, Integer> toUse = (color == this.color) ? this.myAvailableMoves : this.enemyAvailableMoves;
+		ArrayList<Long> pos = new ArrayList<>();
+		
 		
 		for(Entry<Long, Integer> entry : toUse.entrySet()){
+			
 			if(entry.getValue() > max){
+				pos.clear();
 				max = entry.getValue();
-				pos = entry.getKey();
+				pos.add(entry.getKey());
+			} else if (entry.getValue() == max) {
+				pos.add(entry.getKey());
 			}
 		}
-		return (pos == null) ? null : Space.decode(pos);
+		
+		return (pos.size() == 0) ? null : Space.decode(pos.get((int)(Math.random() * pos.size())));
 	}
 
 	@Override
