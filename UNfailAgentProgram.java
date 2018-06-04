@@ -25,21 +25,22 @@ public class UNfailAgentProgram implements AgentProgram {
 	protected final int SPACE = 0;
 	protected final int WHITE = 1;
 	protected final int BLACK = -1;
-
-	protected int color;
+	protected int id;
 	protected int size;
+	protected int color;
 	protected int[][] board;
-//	protected LinkedList<Long> availableMoves;
+	protected boolean myTurn;
 	protected LinkedList<Long> blackPieces;
 	protected LinkedList<Long> whitePieces;
 	protected HashMap<Long, Integer> myAvailableMoves;
 	protected HashMap<Long, Integer> enemyAvailableMoves;
 
-	public UNfailAgentProgram(String color) {
+	public UNfailAgentProgram(String color, int id) {
+		this.id = id;
 		this.color = color.equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
 		this.size = 0;
 		this.board = null;
-//		this.availableMoves = new LinkedList<>();
+		this.myTurn = this.color == this.WHITE;
 		this.whitePieces = new LinkedList<>();
 		this.blackPieces = new LinkedList<>();
 		this.myAvailableMoves = new HashMap<>();
@@ -128,7 +129,7 @@ public class UNfailAgentProgram implements AgentProgram {
 		int gain = gain(initI, initJ, stepI, stepJ, colorToUse);
 		if (gain == 0) return ;
 		
-		Long key = Space.encode(initI-stepI, initJ-stepJ);
+		Long key = Space.encode(initJ-stepJ, initI-stepI);
 		int actualGain = (auxMap.containsKey(key) ? auxMap.get(key) : 0);
 		auxMap.put(key, gain + actualGain);
 	}
@@ -247,34 +248,38 @@ public class UNfailAgentProgram implements AgentProgram {
 		int[] move = null;
 		int turn = ((String) p.getAttribute("play")).equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
 		
+		System.out.println(this.id+": current turn: " + ((turn == this.WHITE) ? "white" : "black"));
+				
 		
-		System.out.println("current turn: " + ((turn == this.WHITE) ? "white" : "black"));
-		
-		
-		if (turn == this.color) {
+		if (turn == this.color /*&& this.myTurn*/) {
 			
-			System.out.println("My turn");
+			System.out.println(this.id+": My turn");
 			if (this.size == 0) {
 				this.size = Integer.parseInt((String) p.getAttribute("size"));		
 				this.board = new int[this.size][this.size];
 			}
-			
 			this.updateBoard(p);
 			this.printBoard();
 			
-			this.calculateAvailableMoves();			
+			this.calculateAvailableMoves();
+			
 			move = this.getOptimalMove(this.color);
 			
-			System.out.println(move[1] + ":" + move[0] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
+			this.myTurn = false;			
+			System.out.println(this.id+": "+move[0] + ":" + move[1] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
 			return new Action(move[1] + ":" + move[0] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
 			
 			
-		} else {
-			System.out.println("Enemy turn");
-			System.out.println("Stealing turn");
-			return new Action(Reversi.PASS);
+//		} else if (turn == this.color) {
+//			System.out.println(this.id+": Ya hice mi movimiento, esperando...");
+//			return new Action(Reversi.PASS);
 			
-		}		
+		} else {
+			System.out.println(this.id+": Enemy turn");
+			this.myTurn = true;
+			System.out.println(this.id+": Stealing turn");
+			return new Action(Reversi.PASS);
+		}
 	}
 
 	@Override
