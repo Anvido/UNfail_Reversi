@@ -4,6 +4,7 @@
  */
 package unalcol.agents.examples.games.reversi.sis20181.UNfail;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -106,52 +107,48 @@ public class UNfailAgentProgram implements AgentProgram {
 	}
 	
 	public void addToMap(int initI, int initJ, int stepI, int stepJ){
-		System.out.println("addToMap IN");
 		
 		int colorToUse = 0;
 		HashMap<Long, Integer> auxMap = null;
+		
+		
 		if(this.board[initI][initJ] == this.color){
-			//	buscando la ganacia del enemigo (rompe con su color)
+			
+			// buscando la ganacia del enemigo (rompe con su color)
 			colorToUse = enemy(this.color);
 			auxMap = enemyAvailableMoves;
+			
 		}else if(this.board[initI][initJ] == enemy(this.color)){
-			//	buscando mi ganacia (rompe con mi color)
+			
+			// buscando mi ganacia (rompe con mi color)
 			colorToUse = this.color;
 			auxMap = myAvailableMoves;
 		}
 		
-		System.out.println("prev gain");
 		int gain = gain(initI, initJ, stepI, stepJ, colorToUse);
+		if (gain == 0) return ;
 		
-
-		System.out.println("pos gain");
 		Long key = Space.encode(initI-stepI, initJ-stepJ);
-		int actualGain = (auxMap.get(key) == null? 0 : auxMap.get(key));
+		int actualGain = (auxMap.containsKey(key) ? auxMap.get(key) : 0);
 		auxMap.put(key, gain + actualGain);
-		
-		System.out.println("addToMap IN");
 	}
 
 	public int gain(int initI, int initJ, int stepI, int stepJ, int color) {
-		System.out.println("case stepI "+stepI+" stepJ "+stepJ);
 		int gain = 0;
-		for (int i = initI; i >= 0 && i < this.size; i+=stepI){
-			for (int j = initJ; j >= 0 && j < this.size; j+=stepJ){
-				System.out.println("i: "+i+" j: "+j);
-				if(this.board[i][j] == this.SPACE){
-					return 0;
-				}else if(this.board[i][j] == color){
-					return gain;
-				}else{
-					gain++;
-				}
+		
+		for (int i = initI, j = initJ; i >= 0 && i < this.size && j >= 0 && j < this.size; i+=stepI, j+=stepJ){
+			if (this.board[i][j] == this.SPACE) {
+				return 0;
+			} else if(this.board[i][j] == color) {
+				return gain;
+			} else {
+				gain++;
 			}
 		}
 		return 0;
 	}
 	
 	public void addAvailableMoves(Long piece) {
-		System.out.println("addavailablemoves IN");
 		int[] coords = Space.decode(piece);
 		int x = coords[0], y = coords[1];
 		
@@ -213,12 +210,9 @@ public class UNfailAgentProgram implements AgentProgram {
 				addToMap(y, x, 1, 1);
 			}
 		}catch(Exception e){ }
-
-		System.out.println("addavailablemoves OUT");
 	}
 	
 	public void calculateAvailableMoves() {
-		System.out.println("entr'e aqu'i bastardos");
 		LinkedList<Long> enemyPieces, myPieces;
 
 		if (this.color == this.WHITE) {
@@ -228,28 +222,16 @@ public class UNfailAgentProgram implements AgentProgram {
 			myPieces = this.blackPieces;
 			enemyPieces = this.whitePieces;
 		}
-		System.out.println(myPieces);
-		System.out.println(enemyPieces);
 		
 		for (Long piece : enemyPieces) {
 			this.addAvailableMoves(piece);
-			System.out.println("calculate poss"+Arrays.toString(Space.decode(piece)));
 		}
-		System.out.println("sal'i prros");
 	}
 	
 	public int[] getOptimalMove(int color) {
 		int max = 0;
 		Long pos = null;
-		HashMap<Long, Integer> toUse = null;
-		
-		if(color == this.color){
-			// soy sho
-			toUse = myAvailableMoves;
-		}else{
-			// es el otro prro
-			toUse = enemyAvailableMoves;
-		}
+		HashMap<Long, Integer> toUse = (color == this.color) ? this.myAvailableMoves : this.enemyAvailableMoves;
 		
 		for(Entry<Long, Integer> entry : toUse.entrySet()){
 			if(entry.getValue() > max){
@@ -257,41 +239,42 @@ public class UNfailAgentProgram implements AgentProgram {
 				pos = entry.getKey();
 			}
 		}
-		System.out.println("OptimalMove max gain "+max);
-		System.out.println("OptimalMove pos "+Arrays.toString(Space.decode(pos)));
 		return Space.decode(pos);
 	}
 
 	@Override
 	public Action compute(Percept p) {
 		int[] move = null;
-		int turno = ((String) p.getAttribute("play")).equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
-		// String tiempo = (String) p.getAttribute(this.color + "_time");
-
-		if (turno == this.color) {
+		int turn = ((String) p.getAttribute("play")).equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
+		
+		
+		System.out.println("current turn: " + ((turn == this.WHITE) ? "white" : "black"));
+		
+		
+		if (turn == this.color) {
+			
+			System.out.println("My turn");
 			if (this.size == 0) {
-				this.size = Integer.parseInt((String) p.getAttribute("size"));
-				System.out.println(this.size);
-				this.initBoard();
-				this.printBoard();
-				if(this.color == this.WHITE){
-					this.calculateAvailableMoves();
-					move = this.getOptimalMove(this.color);
-				}
-			} else {
-				// TODO: UNfailAgentProgram
-				this.updateBoard(p);
-				this.printBoard();
-				
-				this.calculateAvailableMoves();
-				move = this.getOptimalMove(this.color);
-				
+				this.size = Integer.parseInt((String) p.getAttribute("size"));		
+				this.board = new int[this.size][this.size];
 			}
-			System.out.println(move[1] + ":" + move[0] + ":" + color);
-			return new Action(move[1] + ":" + move[0] + ":" + color);
-		}
-		System.out.println("Stealing turn");
-		return new Action(Reversi.PASS);
+			
+			this.updateBoard(p);
+			this.printBoard();
+			
+			this.calculateAvailableMoves();			
+			move = this.getOptimalMove(this.color);
+			
+			System.out.println(move[1] + ":" + move[0] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
+			return new Action(move[1] + ":" + move[0] + ":" + ((this.color == this.WHITE) ? "white" : "black"));
+			
+			
+		} else {
+			System.out.println("Enemy turn");
+			System.out.println("Stealing turn");
+			return new Action(Reversi.PASS);
+			
+		}		
 	}
 
 	@Override
