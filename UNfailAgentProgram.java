@@ -4,8 +4,11 @@
  */
 package unalcol.agents.examples.games.reversi.sis20181.UNfail;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import unalcol.agents.Action;
 import unalcol.agents.AgentProgram;
@@ -25,17 +28,21 @@ public class UNfailAgentProgram implements AgentProgram {
 	protected int color;
 	protected int size;
 	protected int[][] board;
-	protected LinkedList<Long> availableMoves;
+//	protected LinkedList<Long> availableMoves;
 	protected LinkedList<Long> blackPieces;
 	protected LinkedList<Long> whitePieces;
+	protected HashMap<Long, Integer> myAvailableMoves;
+	protected HashMap<Long, Integer> enemyAvailableMoves;
 
 	public UNfailAgentProgram(String color) {
 		this.color = color.equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
 		this.size = 0;
 		this.board = null;
-		this.availableMoves = new LinkedList<>();
+//		this.availableMoves = new LinkedList<>();
 		this.whitePieces = new LinkedList<>();
 		this.blackPieces = new LinkedList<>();
+		this.myAvailableMoves = new HashMap<>();
+		this.enemyAvailableMoves = new HashMap<>();
 	}
 
 	public void initBoard() {
@@ -45,6 +52,11 @@ public class UNfailAgentProgram implements AgentProgram {
 		this.board[n2][n2 + 1] = this.BLACK;
 		this.board[n2 + 1][n2 + 1] = this.WHITE;
 		this.board[n2 + 1][n2] = this.BLACK;
+		
+		this.whitePieces.add(Space.encode(n2, n2));
+		this.blackPieces.add(Space.encode(n2+1, n2));
+		this.whitePieces.add(Space.encode(n2+1, n2+1));
+		this.blackPieces.add(Space.encode(n2, n2+1));
 	}
 
 	public void printBoard() {
@@ -57,8 +69,10 @@ public class UNfailAgentProgram implements AgentProgram {
 	}
 
 	public void updateBoard(Percept p) {
-		whitePieces.clear();
-		blackPieces.clear();
+		this.whitePieces.clear();
+		this.blackPieces.clear();
+		this.myAvailableMoves.clear();
+		this.enemyAvailableMoves.clear();
 
 		String space = null;
 		for (int i = 0; i < this.size; i++) {
@@ -69,7 +83,6 @@ public class UNfailAgentProgram implements AgentProgram {
 				case "space":
 					this.board[i][j] = this.SPACE;
 					break;
-
 				case "white":
 					this.board[i][j] = this.WHITE;
 					this.whitePieces.add(Space.encode(j, i));
@@ -87,13 +100,58 @@ public class UNfailAgentProgram implements AgentProgram {
 			}
 		}
 	}
-
-	public void visitSpaces() {
+	
+	public int enemy(int color){
+		return color == this.WHITE? this.BLACK : this.WHITE;
+	}
+	
+	public void addToMap(int initI, int initJ, int stepI, int stepJ){
+		System.out.println("addToMap IN");
 		
+		int colorToUse = 0;
+		HashMap<Long, Integer> auxMap = null;
+		if(this.board[initI][initJ] == this.color){
+			//	buscando la ganacia del enemigo (rompe con su color)
+			colorToUse = enemy(this.color);
+			auxMap = enemyAvailableMoves;
+		}else if(this.board[initI][initJ] == enemy(this.color)){
+			//	buscando mi ganacia (rompe con mi color)
+			colorToUse = this.color;
+			auxMap = myAvailableMoves;
+		}
+		
+		System.out.println("prev gain");
+		int gain = gain(initI, initJ, stepI, stepJ, colorToUse);
+		
+
+		System.out.println("pos gain");
+		Long key = Space.encode(initI-stepI, initJ-stepJ);
+		int actualGain = (auxMap.get(key) == null? 0 : auxMap.get(key));
+		auxMap.put(key, gain + actualGain);
+		
+		System.out.println("addToMap IN");
+	}
+
+	public int gain(int initI, int initJ, int stepI, int stepJ, int color) {
+		System.out.println("case stepI "+stepI+" stepJ "+stepJ);
+		int gain = 0;
+		for (int i = initI; i >= 0 && i < this.size; i+=stepI){
+			for (int j = initJ; j >= 0 && j < this.size; j+=stepJ){
+				System.out.println("i: "+i+" j: "+j);
+				if(this.board[i][j] == this.SPACE){
+					return 0;
+				}else if(this.board[i][j] == color){
+					return gain;
+				}else{
+					gain++;
+				}
+			}
+		}
+		return 0;
 	}
 	
 	public void addAvailableMoves(Long piece) {
-		
+		System.out.println("addavailablemoves IN");
 		int[] coords = Space.decode(piece);
 		int x = coords[0], y = coords[1];
 		
@@ -102,42 +160,42 @@ public class UNfailAgentProgram implements AgentProgram {
 		//Arriba
 		try{
 			if (this.board[y - 1][x] == this.SPACE) {
-				
+				addToMap(y, x, 1, 0);
 			}
 		}catch(Exception e){ }
 		
 		// Diagonal arriba derecha
 		try{
 			if (this.board[y - 1][x + 1] == this.SPACE) {
-				
+				addToMap(y, x, 1, -1);
 			}
 		}catch(Exception e){ }
 		
 		// Derecha
 		try{
 			if (this.board[y][x + 1] == this.SPACE) {
-				
+				addToMap(y, x, 0, -1);
 			}
 		}catch(Exception e){ }
 		
 		// Diagonal abajo derecha
 		try{
 			if (this.board[y + 1][x + 1] == this.SPACE) {
-				
+				addToMap(y, x, -1, -1);
 			}
 		}catch(Exception e){ }
 		
 		// Abajo
 		try{
 			if (this.board[y + 1][x] == this.SPACE) {
-				
+				addToMap(y, x, -1, 0);
 			}
 		}catch(Exception e){ }
 		
 		// Diagonal abajo izquierda
 		try{
 			if (this.board[y + 1][x - 1] == this.SPACE) {
-				
+				addToMap(y, x, -1, 1);
 			}
 		}catch(Exception e){ }
 		
@@ -145,41 +203,68 @@ public class UNfailAgentProgram implements AgentProgram {
 		// Izquierda
 		try{
 			if (this.board[y][x - 1] == this.SPACE) {
-				
+				addToMap(y, x, 0, 1);
 			}
 		}catch(Exception e){ }
 		
 		// Diagonal arriba izquierda
 		try{
 			if (this.board[y - 1][x - 1] == this.SPACE) {
-				
+				addToMap(y, x, 1, 1);
 			}
 		}catch(Exception e){ }
-		
-		
-		
-				
+
+		System.out.println("addavailablemoves OUT");
 	}
 	
-//	public void calculateAvailableMoves() {
-//		LinkedList<Long> enemyPieces, myPieces;
-//
-//		if (this.color == this.WHITE) {
-//			myPieces = this.whitePieces;
-//			enemyPieces = this.blackPieces;
-//		} else {
-//			myPieces = this.blackPieces;
-//			enemyPieces = this.whitePieces;
-//		}
-//		
-//		for (Long piece : enemyPieces) {
-//			this.addAvailableMoves(piece, myPieces);
-//		}
-//
-//	}
+	public void calculateAvailableMoves() {
+		System.out.println("entr'e aqu'i bastardos");
+		LinkedList<Long> enemyPieces, myPieces;
+
+		if (this.color == this.WHITE) {
+			myPieces = this.whitePieces;
+			enemyPieces = this.blackPieces;
+		} else {
+			myPieces = this.blackPieces;
+			enemyPieces = this.whitePieces;
+		}
+		System.out.println(myPieces);
+		System.out.println(enemyPieces);
+		
+		for (Long piece : enemyPieces) {
+			this.addAvailableMoves(piece);
+			System.out.println("calculate poss"+Arrays.toString(Space.decode(piece)));
+		}
+		System.out.println("sal'i prros");
+	}
+	
+	public int[] getOptimalMove(int color) {
+		int max = 0;
+		Long pos = null;
+		HashMap<Long, Integer> toUse = null;
+		
+		if(color == this.color){
+			// soy sho
+			toUse = myAvailableMoves;
+		}else{
+			// es el otro prro
+			toUse = enemyAvailableMoves;
+		}
+		
+		for(Entry<Long, Integer> entry : toUse.entrySet()){
+			if(entry.getValue() > max){
+				max = entry.getValue();
+				pos = entry.getKey();
+			}
+		}
+		System.out.println("OptimalMove max gain "+max);
+		System.out.println("OptimalMove pos "+Arrays.toString(Space.decode(pos)));
+		return Space.decode(pos);
+	}
 
 	@Override
 	public Action compute(Percept p) {
+		int[] move = null;
 		int turno = ((String) p.getAttribute("play")).equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
 		// String tiempo = (String) p.getAttribute(this.color + "_time");
 
@@ -189,14 +274,21 @@ public class UNfailAgentProgram implements AgentProgram {
 				System.out.println(this.size);
 				this.initBoard();
 				this.printBoard();
+				if(this.color == this.WHITE){
+					this.calculateAvailableMoves();
+					move = this.getOptimalMove(this.color);
+				}
 			} else {
 				// TODO: UNfailAgentProgram
 				this.updateBoard(p);
-
+				this.printBoard();
+				
+				this.calculateAvailableMoves();
+				move = this.getOptimalMove(this.color);
+				
 			}
-			int i = (int) (8 * Math.random());
-			int j = (int) (8 * Math.random());
-			return new Action(i + ":" + j + ":" + color);
+			System.out.println(move[1] + ":" + move[0] + ":" + color);
+			return new Action(move[1] + ":" + move[0] + ":" + color);
 		}
 		System.out.println("Stealing turn");
 		return new Action(Reversi.PASS);
@@ -206,9 +298,11 @@ public class UNfailAgentProgram implements AgentProgram {
 	public void init() {
 		this.size = 0;
 		this.board = null;
-		this.availableMoves = new LinkedList<>();
+//		this.availableMoves = new LinkedList<>();
 		this.whitePieces = new LinkedList<>();
 		this.blackPieces = new LinkedList<>();
+		this.myAvailableMoves = new HashMap<>();
+		this.enemyAvailableMoves = new HashMap<>();
 	}
 
 }
