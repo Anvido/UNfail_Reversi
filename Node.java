@@ -33,8 +33,8 @@ public class Node {
 				module.updateList(aux.getBoard().clone());
 				enemyMoves = module.calculateAvailableMoves(-this.playerColor);
 				auxGain = this.playerColor == 1 ? 
-					aux.white_count()-current.white_count() :
-					aux.black_count()-current.black_count();
+					module.whitePieces.size()-current.white_count() :
+					module.blackPieces.size()-current.black_count();
 				this.children.add(new Node(aux.getBoard().clone(), -this.playerColor, enemyMoves, this.depth + 1, auxGain));
 			}
 		} else {
