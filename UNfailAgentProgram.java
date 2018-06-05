@@ -84,7 +84,8 @@ public class UNfailAgentProgram implements AgentProgram {
 		LinkedList<Long> myAvailableMoves = this.state.calculateAvailableMoves(this.color);
 		System.out.println(this.id+": moves="+myAvailableMoves.size());
 		Node desicion = new Node(this.state.board.clone(), this.color, myAvailableMoves, 0, 0);
-		int index = (int)desicion.calculateMove();
+		desicion.calculateGain();
+		int index = desicion.selected;
 		return (index == -1) ? null : Space.decode(desicion.moves.get(index));
 	}
 
