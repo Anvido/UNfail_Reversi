@@ -5,7 +5,7 @@ import java.util.LinkedList;
 
 public class Node {
 
-	protected final int MAX_DEPTH = 2;
+	protected final int MAX_DEPTH = 1;
 
 	protected int gain;
 	protected int depth;
@@ -44,37 +44,23 @@ public class Node {
 
 	public int calculateMove() {
 		
-		int max = Integer.MIN_VALUE, aux = 0, pos = -1;		
+		int min = Integer.MAX_VALUE, aux = 0, pos = -1;		
 		if (this.depth == 0) {
 			
 			for (int i = 0; i < this.children.size(); i++) {
 				aux = this.children.get(i).calculateMove();
-				if (aux > max) {
-					max = aux;
+				if (aux < min) {
+					min = aux;
 					pos = i;
 				}
 			}
 			
 			return pos;		
 			
-		} else if (this.depth == 1){
-			
-			if (this.children.size() > 0) {
-				for (Node child : this.children) {
-					aux = child.calculateMove();
-					if (aux > max) {
-						max = aux;
-					}
-				}
-				
-				return this.gain - max;
-				
-			} else {
-				return this.gain;
-			}
-			
 		} else {
-			return this.gain;
+			
+			return this.moves.size();
+			
 		}
 	}
 }
