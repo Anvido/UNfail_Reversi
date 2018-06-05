@@ -1,5 +1,7 @@
 package unalcol.agents.examples.games.reversi.sis20181.UNfail;
 
+import java.util.Arrays;
+
 import unalcol.agents.examples.games.reversi.Board;
 
 public class Board2 extends Board {
@@ -18,13 +20,12 @@ public class Board2 extends Board {
 	}
 	
 	public Board2(int[][] board, Long space, int color){
-		this(board);
-		int[] coords = Space.decode(space);
+		this(board);		
+		int[] coords = Space.decode(space);		
 		this.play(coords[1], coords[0], color);
 	}
 	
 	public int[][] getBoard() {
 		return this.values;
 	}
-	
 }

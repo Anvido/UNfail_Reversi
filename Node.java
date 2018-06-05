@@ -9,40 +9,72 @@ public class Node {
 
 	protected int gain;
 	protected int depth;
-	protected int playingTurn;
+	protected int playerColor;
 	protected int[][] boardSimulated;
+	protected LinkedList<Long> moves;
 	protected LinkedList<Node> children;
 
-	public Node(int[][] board, int playingTurn, LinkedList<Long> availableMoves, int depth) {
-		this.children = new LinkedList<>();
-		this.depth = depth;
-		this.boardSimulated = board;
-		this.gain = 0;
+	public Node(int[][] board, int playerColor, LinkedList<Long> availableMoves, int depth, int gain) {
+		int auxGain = 0;
+		this.gain = gain;
 		Board2 aux = null;
-
+		this.depth = depth;
+		this.moves = availableMoves;
+		this.boardSimulated = board;
+		this.playerColor = playerColor;
 		LinkedList<Long> enemyMoves = null;
 		CalculateModule module = new CalculateModule();
-
+		Board2 current = new Board2(this.boardSimulated);
+		
 		if (this.depth < this.MAX_DEPTH) {
-			for (Long space : availableMoves) {
-
-				aux = new Board2(this.boardSimulated, space, -this.playingTurn);
-
-				// Aqui toca calcular los movimientos del otro
+			this.children = new LinkedList<>();
+			for (Long space : this.moves) {
+				aux = new Board2(this.boardSimulated, space, this.playerColor);
 				module.updateList(aux.getBoard().clone());
-				enemyMoves = module.calculateAvailableMoves(-this.playingTurn);
-
-				this.children.add(new Node(aux.getBoard(), -this.playingTurn, enemyMoves, this.depth + 1));
+				enemyMoves = module.calculateAvailableMoves(-this.playerColor);
+				auxGain = this.playerColor == 1 ? 
+					aux.white_count()-current.white_count() :
+					aux.black_count()-current.black_count();
+				this.children.add(new Node(aux.getBoard().clone(), -this.playerColor, enemyMoves, this.depth + 1, auxGain));
 			}
+		} else {
+			this.children = null;
 		}
 	}
 
-	public void algo() {
-		// new Board2(this.boardSimulated, space, -this.playingTurn);
-		// int gainByPieces = 0;
-		// Board2 aux = null, currentBoard = new Board2(this.boardSimulated);
-		// int gainByPieces = (this.playingTurn == 1) ?
-		// currentBoard.white_count()-aux.white_count() :
-		// currentBoard.black_count()-aux.black_count() ;
+	public int calculateMove() {
+		
+		int max = Integer.MIN_VALUE, aux = 0, pos = -1;		
+		if (this.depth == 0) {
+			
+			for (int i = 0; i < this.children.size(); i++) {
+				aux = this.children.get(i).calculateMove();
+				if (aux > max) {
+					max = aux;
+					pos = i;
+				}
+			}
+			
+			return pos;		
+			
+		} else if (this.depth == 1){
+			
+			if (this.children.size() > 0) {
+				for (Node child : this.children) {
+					aux = child.calculateMove();
+					if (aux > max) {
+						max = aux;
+					}
+				}
+				
+				return this.gain - max;
+				
+			} else {
+				return this.gain;
+			}
+			
+		} else {
+			return this.gain;
+		}
 	}
 }

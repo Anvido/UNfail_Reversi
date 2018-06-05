@@ -18,47 +18,45 @@ import unalcol.agents.examples.games.reversi.Reversi;
 
 /**
  *
- * @author Jonatan
+ * @author UNfail
  */
+
 public class UNfailAgentProgram implements AgentProgram {
 
-	protected final int SPACE = 0;
-	protected final int WHITE = 1;
-	protected final int BLACK = -1;
 	protected int id;
 	protected int size;
 	protected int color;
+	protected final int SPACE = 0;
+	protected final int WHITE = 1;
+	protected final int BLACK = -1;
 	protected CalculateModule state;
 
 	public UNfailAgentProgram(String color, int id) {
 		this.id = id;
-		this.color = color.equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
 		this.size = 0;
 		this.state = null;
+		this.color = color.equalsIgnoreCase("white") ? this.WHITE : this.BLACK;
 	}
 
 	public void initBoard(int size) {
 		int n2 = size / 2 - 1;
 		this.state.addWhitePiece(n2, n2);
 		this.state.addBlackPiece(n2 + 1, n2);
-		this.state.addWhitePiece(n2 + 1, n2 + 1);
 		this.state.addBlackPiece(n2, n2 + 1);
+		this.state.addWhitePiece(n2 + 1, n2 + 1);
 	}
 
-	public void printBoard(int[][] board) {
+	public static void printBoard(int[][] board) {
 		for (int[] row : board) {
 			for (int i : row) {
-				System.out.print((i > this.SPACE) ? "B" : (i < this.SPACE) ? "R" : "-");
+				System.out.print((i > 0) ? "B" : (i < 0) ? "R" : "-");
 			}
 			System.out.println();
 		}
 	}
 
 	public void updateBoard(Percept p) {
-		this.state.clear();
-		
-		// Inicializo el tablero
-		
+		this.state.clear();		
 		String space = null;
 		for (int i = 0; i < this.size; i++) {
 			for (int j = 0; j < this.size; j++) {
@@ -81,19 +79,13 @@ public class UNfailAgentProgram implements AgentProgram {
 		}
 	}
 
-	// public int enemy(int color){
-	// return color == this.WHITE? this.BLACK : this.WHITE;
-	// }
 
 	public int[] getOptimalMove() {
-
-		Long pos = null;
 		LinkedList<Long> myAvailableMoves = this.state.calculateAvailableMoves(this.color);
-
-		// Node desicion = new Node(this.state.board.clone(), this.color,
-		// myAvailableMoves, 0);
-
-		return (myAvailableMoves.size() == 0) ? null : Space.decode(myAvailableMoves.get(0));
+		System.out.println(this.id+": moves="+myAvailableMoves.size());
+		Node desicion = new Node(this.state.board.clone(), this.color, myAvailableMoves, 0, 0);
+		int index = desicion.calculateMove();
+		return (index == -1) ? null : Space.decode(desicion.moves.get(index));
 	}
 
 	@Override
@@ -111,7 +103,6 @@ public class UNfailAgentProgram implements AgentProgram {
 				this.state = new CalculateModule(size);
 			}
 			this.updateBoard(p);
-			this.printBoard(this.state.board);
 			move = this.getOptimalMove();
 			if (move == null) {
 				System.out.println("No tengo movimientos... Pasar");
@@ -132,5 +123,4 @@ public class UNfailAgentProgram implements AgentProgram {
 	public void init() {
 		this.size = 0;
 	}
-
 }
