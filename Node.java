@@ -42,9 +42,9 @@ public class Node {
 		}
 	}
 
-	public int calculateMove() {
+	public double calculateMove() {
 		
-		int max = Integer.MIN_VALUE, aux = 0, pos = -1;		
+		double max = Double.NEGATIVE_INFINITY, aux = 0, pos = -1;		
 		if (this.depth == 0) {
 			
 			for (int i = 0; i < this.children.size(); i++) {
@@ -53,8 +53,7 @@ public class Node {
 					max = aux;
 					pos = i;
 				}
-			}
-			
+			}			
 			return pos;		
 			
 		} else if (this.depth == 1){
@@ -67,7 +66,7 @@ public class Node {
 					}
 				}
 				
-				return this.gain - max;
+				return (double)(this.gain - max)/(double)(this.moves.size());
 				
 			} else {
 				return this.gain;

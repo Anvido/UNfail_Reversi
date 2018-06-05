@@ -84,7 +84,7 @@ public class UNfailAgentProgram implements AgentProgram {
 		LinkedList<Long> myAvailableMoves = this.state.calculateAvailableMoves(this.color);
 		System.out.println(this.id+": moves="+myAvailableMoves.size());
 		Node desicion = new Node(this.state.board.clone(), this.color, myAvailableMoves, 0, 0);
-		int index = desicion.calculateMove();
+		int index = (int)desicion.calculateMove();
 		return (index == -1) ? null : Space.decode(desicion.moves.get(index));
 	}
 
@@ -105,7 +105,7 @@ public class UNfailAgentProgram implements AgentProgram {
 			this.updateBoard(p);
 			move = this.getOptimalMove();
 			if (move == null) {
-				System.out.println("No tengo movimientos... Pasar");
+				System.out.println(this.id+": No tengo movimientos... Pasar");
 				return new Action(Reversi.PASS);
 			} else {
 				System.out.println(this.id + ": " + move[0] + ":" + move[1] + ":"
